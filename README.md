@@ -61,3 +61,9 @@ Il modulo raccoglie nome, telefono, data, ora, numero di persone e note.
 Restano nel D1 e si leggono solo dal pannello, dopo l'accesso con la chiave.
 L'indirizzo di rete non viene mai salvato in chiaro: se ne conserva
 un'impronta con sale segreto, usata solo per frenare gli invii ripetuti.
+
+## Pubblicazione automatica
+
+Il repository e collegato a Cloudflare Workers Builds. Ogni push su `main`
+viene costruito e messo in produzione dalla Cloudflare, senza comandi a mano.
+Il database D1 e i secret del Worker non vengono toccati dal deploy.
