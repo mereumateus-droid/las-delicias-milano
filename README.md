@@ -47,6 +47,14 @@ quando cambiano:
 npx wrangler d1 execute las-delicias-prenotazioni --remote --file=migrations/0001_prenotazioni.sql
 ```
 
+## Conservazione dei dati
+
+Ogni notte, alle 4:30 UTC, il Worker cancella da solo le prenotazioni la cui
+data e passata da piu di 6 mesi (`triggers.crons` in `wrangler.jsonc`, funzione
+`pulizia` in `src/server.ts`). Il termine si cambia in un punto solo:
+`MESI_DI_CONSERVAZIONE`. Cambiandolo, va aggiornata anche l'informativa nel
+modulo, che dichiara i 6 mesi al cliente.
+
 ## Dati personali
 
 Il modulo raccoglie nome, telefono, data, ora, numero di persone e note.

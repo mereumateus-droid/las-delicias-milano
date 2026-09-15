@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { bindings } from "./lib/bindings.server";
 import { applySecurityHeaders } from "./lib/security-headers.server";
 import { SITO_HTML } from "./sito-html";
 
@@ -39,6 +40,25 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   });
 }
 
+/**
+ * Conservazione dei dati: una prenotazione serve finche serve. Passati sei
+ * mesi dalla data del tavolo, nome, telefono e note non hanno piu ragione di
+ * restare, e vengono cancellati da soli. La pulizia gira ogni notte, chiamata
+ * dalla pianificazione di Cloudflare (vedi "triggers" in wrangler.jsonc).
+ */
+const MESI_DI_CONSERVAZIONE = 6;
+
+async function pulizia(): Promise<number> {
+  const db = bindings().DB;
+  if (!db) return 0;
+  const esito = await db
+    .prepare(`DELETE FROM prenotazioni WHERE data < date('now', '-${MESI_DI_CONSERVAZIONE} months')`)
+    .run();
+  const tolte = esito.meta?.changes ?? 0;
+  if (tolte > 0) console.log(`pulizia: ${tolte} prenotazioni oltre i ${MESI_DI_CONSERVAZIONE} mesi`);
+  return tolte;
+}
+
 // Pagina non trovata: breve, in italiano, senza rivelare la piattaforma su
 // cui il sito e costruito.
 const NON_TROVATA = `<!DOCTYPE html>
@@ -59,7 +79,7 @@ const NON_TROVATA = `<!DOCTYPE html>
 <body>
   <p class="occhio">Las Delicias</p>
   <h1>Pagina non trovata</h1>
-  <p style="color:#C6B69B">La pagina che cercate non esiste o e stata spostata.</p>
+  <p style="color:#C6B69B">La pagina che cercate non esiste o è stata spostata.</p>
   <p><a href="/">Torna al sito</a></p>
 </body></html>`;
 
@@ -75,6 +95,18 @@ function paginaPubblica(): Response {
 }
 
 export default {
+  async scheduled(
+    _evento: unknown,
+    _env: unknown,
+    ctx: { waitUntil: (lavoro: Promise<unknown>) => void },
+  ) {
+    ctx.waitUntil(
+      pulizia().catch((errore) => {
+        console.error("pulizia fallita:", errore);
+      }),
+    );
+  },
+
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const url = new URL(request.url);

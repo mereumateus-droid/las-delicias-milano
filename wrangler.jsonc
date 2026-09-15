@@ -25,6 +25,10 @@
   "workers_dev": true,
   "preview_urls": false,
 
+  // Ogni notte alle 4:30 UTC il Worker cancella le prenotazioni piu vecchie
+  // di 6 mesi: e la conservazione dei dati personali, non una pulizia tecnica.
+  "triggers": { "crons": ["30 4 * * *"] },
+
   // Database gia esistente: l'id non cambia, cosi le prenotazioni restano.
   "d1_databases": [
     {
