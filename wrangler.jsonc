@@ -1,0 +1,36 @@
+{
+  // Las Delicias · Milano — Cloudflare Worker.
+  // Il Worker serve il sito pubblico, l'API delle prenotazioni e il pannello
+  // riservato; il database D1 conserva le prenotazioni.
+  //
+  // I segreti (PANNELLO_CHIAVE, PANNELLO_SESSIONE) NON stanno qui: vivono
+  // nei secret del Worker e sopravvivono a ogni deploy.
+  "name": "las-delicias-milano",
+  "main": "dist/server/server.js",
+  "compatibility_date": "2025-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+
+  // I file statici vengono serviti prima del Worker; "/" cade sul Worker.
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "none"
+  },
+
+  "vars": { "HF_ENV": "production", "APP_SLUG": "las-delicias-milano" },
+
+  // Indirizzo pubblico su workers.dev, senza URL di anteprima: ogni versione
+  // pubblicata avrebbe altrimenti un proprio indirizzo raggiungibile da fuori.
+  "workers_dev": true,
+  "preview_urls": false,
+
+  // Database gia esistente: l'id non cambia, cosi le prenotazioni restano.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "las-delicias-prenotazioni",
+      "database_id": "0a9bed6a-c78e-42b3-a2a1-c4aa9763ebea"
+    }
+  ]
+}
